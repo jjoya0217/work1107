@@ -440,7 +440,8 @@ function levelConfig(n){
 // ---------- board logic ----------
 function makesMatch(row, r, c, t){
   return (c >= 2 && row[c - 1].type === t && row[c - 2].type === t) ||
-         (r >= 2 && board[r - 1][c].type === t && board[r - 2][c].type === t);
+         (r >= 2 && board[r - 1][c].type === t && board[r - 2][c].type === t) ||
+         (r >= 1 && c >= 1 && row[c - 1].type === t && board[r - 1][c].type === t && board[r - 1][c - 1].type === t);
 }
 function fillBoard(){
   for (let tries = 0; tries < 300; tries++){
@@ -477,6 +478,14 @@ function findGroups(){
       r = e;
     }
   }
+  // 2x2 squares of the same gem also clear
+  for (let r = 0; r < N - 1; r++) for (let c = 0; c < N - 1; c++){
+    const g = board[r][c];
+    if (!g || g.type < 0) continue;
+    const t = g.type, b = board[r][c + 1], d = board[r + 1][c], e = board[r + 1][c + 1];
+    if (b && d && e && b.type === t && d.type === t && e.type === t)
+      runs.push({dir: 'sq', cells: [key(r, c), key(r, c + 1), key(r + 1, c), key(r + 1, c + 1)]});
+  }
   const groups = [];
   for (const run of runs){
     const hit = groups.filter(g => run.cells.some(k => g.set.has(k)));
@@ -489,6 +498,7 @@ function findGroups(){
 function planGroup(gr, swapKeys){
   let maxLen = 0, longest = null, hasH = false, hasV = false;
   for (const run of gr.runs){
+    if (run.dir === 'sq') continue;
     if (run.cells.length > maxLen){ maxLen = run.cells.length; longest = run; }
     if (run.dir === 'h') hasH = true; else hasV = true;
   }
@@ -515,7 +525,13 @@ function matchAt(r, c){
   for (let i = c + 1; i < N && board[r][i].type === t; i++) h++;
   for (let i = r - 1; i >= 0 && board[i][c].type === t; i--) v++;
   for (let i = r + 1; i < N && board[i][c].type === t; i++) v++;
-  return h >= 3 || v >= 3;
+  if (h >= 3 || v >= 3) return true;
+  for (const [dr, dc] of [[-1, -1], [-1, 0], [0, -1], [0, 0]]){
+    const r0 = r + dr, c0 = c + dc;
+    if (r0 < 0 || c0 < 0 || r0 >= N - 1 || c0 >= N - 1) continue;
+    if (board[r0][c0].type === t && board[r0][c0 + 1].type === t && board[r0 + 1][c0].type === t && board[r0 + 1][c0 + 1].type === t) return true;
+  }
+  return false;
 }
 function findMove(){
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++){
@@ -1230,6 +1246,7 @@ function renderMap(){
 function buildStatic(){
   $('heroGems').innerHTML = [0, 1, 2, 3, 4, 5].map(t => `<img alt="" src="${iconURL(t)}">`).join('');
   const items = [
+    [iconURL(3), '<b>네모 모양 4개</b> → 2×2로 모여도 반짝 사라져요!'],
     [iconURL(2, 'h'), '<b>4개 한 줄</b> → 줄 보석. 터지면 가로나 세로 한 줄이 싹!'],
     [iconURL(4, 'bomb'), '<b>ㄱ·ㅗ·ㅜ 모양 5개</b> → 폭탄 보석. 주변 3×3 펑!'],
     [iconURL(0, 'rainbow'), '<b>5개 한 줄</b> → 무지개 보석. 바꾼 색 보석을 모두 지워요.'],
