@@ -27,7 +27,7 @@ body{
                    radial-gradient(ellipse at 100% 110%, #5b2072 0, transparent 50%);
   padding-left:max(16px, env(safe-area-inset-left, 0px));
   padding-right:max(16px, env(safe-area-inset-right, 0px));
-  overflow:hidden; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
+  overflow-x:hidden; overflow-y:auto; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
 }
 .sky-dots{position:fixed; inset:0; pointer-events:none; opacity:.7;
   background-image:
@@ -42,8 +42,10 @@ body{
     radial-gradient(1.4px 1.4px at 74% 94%, #fff 50%, transparent 52%);
   animation:twinkle 3.5s ease-in-out infinite alternate;}
 @keyframes twinkle{to{opacity:.35}}
-#app{height:100%; max-width:520px; margin:0 auto; position:relative}
-.screen{height:100%; overflow-y:auto; padding-block:14px 18px; display:flex; flex-direction:column; gap:12px}
+#app{min-height:100%; max-width:520px; margin:0 auto; position:relative}
+.screen{min-height:100%; padding-block:14px 18px; display:flex; flex-direction:column; gap:12px}
+body.playing{overflow:hidden}
+body.playing #app{height:100%}
 button{font-family:var(--display); color:inherit; cursor:pointer; border:0; background:none}
 button:focus-visible{outline:3px solid var(--mint); outline-offset:2px}
 
@@ -95,7 +97,7 @@ h1{margin:0; font-family:var(--display); font-weight:400; font-size:clamp(46px, 
 @keyframes pulse{50%{box-shadow:0 4px 0 #8a5a12, 0 0 0 8px rgba(246,196,83,.18)}}
 
 /* ---------- Game HUD ---------- */
-.game{gap:10px; overflow:hidden}
+.game{height:100%; gap:10px; overflow:hidden}
 .status{display:grid; grid-template-columns:auto 1fr; gap:10px}
 .moves{min-width:84px; padding:6px 10px; border-radius:16px; background:var(--panel); border:2px solid var(--line); text-align:center; display:flex; flex-direction:column; justify-content:center}
 .moves .num{font-family:var(--display); font-size:32px; line-height:1; font-variant-numeric:tabular-nums}
@@ -1118,6 +1120,8 @@ $('btnSound').addEventListener('click', () => { Sound.init(); Sound.muted = !Sou
 // ---------- screens & modal ----------
 function show(id){
   for (const s of ['home', 'map', 'game']) $(s).hidden = s !== id;
+  document.body.classList.toggle('playing', id === 'game');
+  window.scrollTo(0, 0);
   if (id === 'home') renderHome();
   if (id === 'map') renderMap();
 }
